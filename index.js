@@ -1,7 +1,7 @@
 const Discord = require("discord.js");
 const { prefix } = require("./config.json");
 const ytdl = require("ytdl-core");
-const token = process.env.token
+const token = "OTUzNDExNzcwMjcyMzQyMDE2.YjEL5w.BmSIqcu-0TF6wKP2cy3LZTcTdsc"//process.env.token
 const client = new Discord.Client();
 
 const queueM = new Map();
@@ -41,19 +41,21 @@ client.on("message", async message => {
 
     const args = message.content.split(" ");
 
-
     if (message.content.startsWith(`${prefix}play`)) {
         if (args.length !== 2) return;
         execute(message, serverQueue);
         return;
     } else if (message.content.startsWith(`${prefix}skip`)) {
-        skip(message, serverQueue);
+        if (serverQueue.songs.length > 0)
+            skip(message, serverQueue);
         return;
     } else if (message.content.startsWith(`${prefix}loop`)) {
-        loop(message, serverQueue);
+        if (serverQueue.songs.length > 0)
+            loop(message, serverQueue);
         return;
     } else if (message.content.startsWith(`${prefix}queue`)) {
-        queue(message, serverQueue);
+        if (serverQueue.songs.length > 0)
+            queue(message, serverQueue);
         return;
     } else if (message.content.startsWith(`${prefix}leave`)) {
         leave(message, serverQueue);
@@ -87,7 +89,7 @@ async function execute(message, serverQueue) {
         requestedBy: message.author.username
     };
 
-    if (!serverQueue) {
+    if (!serverQueue || serverQueue.songs.length === 0) {
         const queueContruct = {
             textChannel: message.channel,
             voiceChannel: voiceChannel,
@@ -181,14 +183,11 @@ function skip(message, serverQueue) {
 function play(guild, song) {
     const serverQueue = queueM.get(guild.id);
     if (!song) {
-        //todo: only delete if song finished playing, so that if empty bot makes new queue and starts
         return;
     }
     const dispatcher = serverQueue.connection
         .play(ytdl(song.url))
         .on("finish", () => {
-            if (serverQueue.songs.empty())
-                queueM.delete(guild.id);
             if (serverQueue.loop === true)
                 serverQueue.songs.push(serverQueue.songs[0]);
             serverQueue.songs.shift();
