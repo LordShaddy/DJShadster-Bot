@@ -28,7 +28,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
         return;
 
     // otherwise, check how many people are in the channel now
-    if (!oldState.channel.members.size - 1)
+    if (oldState.channel.members.size <= 1)
        oldState.channel.leave(); // leave
        queueM.delete(oldState.guild.id);
 });
