@@ -18,6 +18,10 @@ client.once("disconnect", () => {
     console.log("Disconnect!");
 });
 
+client.on('error', error => {
+    console.log(error);
+});
+
 client.on('voiceStateUpdate', (oldState, newState) => {
     // if nobody left the channel in question, return.
     if (!oldState.channel)
