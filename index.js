@@ -43,7 +43,6 @@ client.on("message", async message => {
 
 
     if (message.content.startsWith(`${prefix}play`)) {
-        if (!message.content.includes(' ')) return;
         if (args.length !== 2) return;
         execute(message, serverQueue);
         return;
