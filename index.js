@@ -39,6 +39,10 @@ client.on("message", async message => {
 
     const serverQueue = queueM.get(message.guild.id);
 
+    const args = message.content.split(" ");
+    if (!message.content.includes(' ')) return;
+    if (!args.length === 2) return;
+
     if (message.content.startsWith(`${prefix}play`)) {
         execute(message, serverQueue);
         return;
