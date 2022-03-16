@@ -1,0 +1,28 @@
+{
+  "name": "DJ Shadster music-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "avconv": "^3.1.0",
+    "discord.js": "^12.5.3",
+    "ffmpeg": "^0.0.4",
+    "ffmpeg-static": "^5.0.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "ytdl-core": "^4.11.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LordShaddy/DJShadster-Music-Bot.git"
+  },
+  "author": "Shaddy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LordShaddy/DJShadster-Music-Bot/issues"
+  },
+  "homepage": "https://github.com/LordShaddy/DJShadster-Music-Bot#readme"
+}
