@@ -40,10 +40,11 @@ client.on("message", async message => {
     const serverQueue = queueM.get(message.guild.id);
 
     const args = message.content.split(" ");
-    if (!message.content.includes(' ')) return;
-    if (!args.length === 2) return;
+
 
     if (message.content.startsWith(`${prefix}play`)) {
+        if (!message.content.includes(' ')) return;
+        if (args.length !== 2) return;
         execute(message, serverQueue);
         return;
     } else if (message.content.startsWith(`${prefix}skip`)) {
@@ -59,7 +60,6 @@ client.on("message", async message => {
         leave(message, serverQueue);
         return;
     }
-
     else {
         message.channel.send("You need to enter a valid command!");
     }
