@@ -181,12 +181,14 @@ function skip(message, serverQueue) {
 function play(guild, song) {
     const serverQueue = queueM.get(guild.id);
     if (!song) {
-        queueM.delete(guild.id);
+        //todo: only delete if song finished playing, so that if empty bot makes new queue and starts
         return;
     }
     const dispatcher = serverQueue.connection
         .play(ytdl(song.url))
         .on("finish", () => {
+            if (serverQueue.songs.empty())
+                queueM.delete(guild.id);
             if (serverQueue.loop === true)
                 serverQueue.songs.push(serverQueue.songs[0]);
             serverQueue.songs.shift();
@@ -196,7 +198,6 @@ function play(guild, song) {
     let dur = getFormattedTime(song)
     serverQueue.textChannel.send(`Start playing: **${song.title}**  [${dur}]`);
     dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
-
 }
 
 client.login(token);
