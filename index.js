@@ -80,8 +80,14 @@ async function execute(message, serverQueue) {
             "I need the permissions to join and speak in your voice channel!"
         );
     }
+    let songInfo
+    try{
+        songInfo = await ytdl.getInfo(args[1]);
+    }catch (err){
+        //console.log(err);
+        return message.channel.send(`oopsie woopsie! Looks like I couldn't access the video for some reason! (age restriction/having to log in/other BS) `);
+    }
 
-    const songInfo = await ytdl.getInfo(args[1]);
     const song = {
         title: songInfo.videoDetails.title,
         url: songInfo.videoDetails.video_url,
@@ -89,7 +95,7 @@ async function execute(message, serverQueue) {
         requestedBy: message.author.username
     };
 
-    if (!serverQueue || serverQueue.songs.length === 0) {
+    if (!serverQueue ) {
         const queueContruct = {
             textChannel: message.channel,
             voiceChannel: voiceChannel,
@@ -110,11 +116,16 @@ async function execute(message, serverQueue) {
             play(message.guild, queueContruct.songs[0]);
         } catch (err) {
             console.log(err);
-            queueM.delete(message.guild.id);
             return message.channel.send(err);
         }
     } else {
-        serverQueue.songs.push(song);
+        if (serverQueue.songs.length < 1) {
+            serverQueue.songs.push(song);
+            play(message.guild, song);
+        }
+        else {
+            serverQueue.songs.push(song);
+        }
         return message.channel.send(`**${song.title}** has been added to the queue!`);
     }
 }
@@ -200,3 +211,8 @@ function play(guild, song) {
 }
 
 client.login(token);
+
+//todo: leave voice if shut down
+//todo: connection is null error
+//-> connection wenn heroku faxen macht gleichzeitiger zugriff? + noch in voice ist nach neustart
+//todo: sometimes skips queue if new song
