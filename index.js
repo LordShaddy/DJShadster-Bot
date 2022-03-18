@@ -21,10 +21,8 @@ client.once("disconnect", () => {
 
 client.on('error', error => {
     console.log(error);
-    serverQueue.textChannel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
+    //serverQueue.textChannel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
 });
-
-
 
 process.on('uncaughtException', err => {
     console.error('There was an uncaught error', err)
