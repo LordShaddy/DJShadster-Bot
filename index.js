@@ -31,12 +31,12 @@ client.on('shardError', error => {
     serverQueue.voiceChannel.leave();
 });
 
-//process.on('uncaughtException', err => {
-//    console.error('There was an uncaught error', err)
-//    serverQueue.textChannel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
-//    serverQueue.voiceChannel.leave();
-//    process.exit(1) //mandatory (as per the Node.js docs)
-//})
+process.on('uncaughtException', err => {
+    console.error('There was an uncaught error', err)
+    serverQueue.textChannel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
+    serverQueue.voiceChannel.leave();
+    process.exit(1) //mandatory (as per the Node.js docs)
+})
 
 client.on('voiceStateUpdate', (oldState, newState) => {
     // if nobody left the channel in question, return.
