@@ -20,8 +20,14 @@ client.once("disconnect", () => {
 
 client.on('error', error => {
     console.log(error);
-    message.channel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
+
 });
+
+process.on('uncaughtException', err => {
+    console.error('There was an uncaught error', err)
+    message.channel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
+    process.exit(1) //mandatory (as per the Node.js docs)
+})
 
 client.on('voiceStateUpdate', (oldState, newState) => {
     // if nobody left the channel in question, return.
@@ -177,9 +183,9 @@ function loop(message,serverQueue){
     serverQueue.loop = !serverQueue.loop
 
     if (serverQueue.loop === true)
-        serverQueue.textChannel.send(`Starting loop: **${serverQueue.songs[0].title}**`);
+        serverQueue.textChannel.send(`Starting Queue Loop`);
     if (serverQueue.loop === false)
-        serverQueue.textChannel.send(`Ending loop`);
+        serverQueue.textChannel.send(`Ending Queue Loop`);
 }
 
 function skip(message, serverQueue) {
@@ -201,7 +207,9 @@ function play(guild, song) {
         .play(ytdl(song.url))
         .on("finish", () => {
             if (serverQueue.loop === true)
+                //todo: loops the queue instead of the song - make new function for single loop
                 serverQueue.songs.push(serverQueue.songs[0]);
+                serverQueue.songs.
             serverQueue.songs.shift();
             play(guild, serverQueue.songs[0]);
         })
