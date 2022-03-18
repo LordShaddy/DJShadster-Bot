@@ -1,7 +1,7 @@
 const Discord = require("discord.js");
 const { prefix } = require("./config.json");
 const ytdl = require("ytdl-core");
-const token = process.env.token
+const token = "OTUzNDExNzcwMjcyMzQyMDE2.YjEL5w.GKD9SN1cyR2eK0zRx-iWkbs2Qjo"//process.env.token
 const client = new Discord.Client();
 
 const queueM = new Map();
@@ -20,6 +20,7 @@ client.once("disconnect", () => {
 
 client.on('error', error => {
     console.log(error);
+    message.channel.send(`Server Connection Error @Shaddy#8969 please reset me`);
 });
 
 client.on('voiceStateUpdate', (oldState, newState) => {
@@ -40,7 +41,7 @@ client.on("message", async message => {
     const serverQueue = queueM.get(message.guild.id);
 
     const args = message.content.split(" ");
-
+//todo: serverqueue.songs noch nciht immer hier schon definiert, erst nach play aufrug
     if (message.content.startsWith(`${prefix}play`)) {
         if (args.length !== 2) return;
         execute(message, serverQueue);
@@ -216,3 +217,4 @@ client.login(token);
 //todo: connection is null error
 //-> connection wenn heroku faxen macht gleichzeitiger zugriff? + noch in voice ist nach neustart
 //todo: sometimes skips queue if new song
+//todo: !np - anzeige wie weit im song ist
