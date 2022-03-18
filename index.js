@@ -6,6 +6,9 @@ const client = new Discord.Client();
 
 const queueM = new Map();
 
+//TODO: REMOVE ME ( GLOBAL VARIABLE USED FOR ERRORS)
+let serverQueue;
+
 client.once("ready", () => {
     console.log("Ready!");
 });
@@ -20,14 +23,20 @@ client.once("disconnect", () => {
 
 client.on('error', error => {
     console.log(error);
-
 });
 
-process.on('uncaughtException', err => {
-    console.error('There was an uncaught error', err)
-    message.channel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
-    process.exit(1) //mandatory (as per the Node.js docs)
-})
+client.on('shardError', error => {
+    console.error('A websocket connection encountered an error:', error);
+    serverQueue.textChannel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
+    serverQueue.voiceChannel.leave();
+});
+
+//process.on('uncaughtException', err => {
+//    console.error('There was an uncaught error', err)
+//    serverQueue.textChannel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
+//    serverQueue.voiceChannel.leave();
+//    process.exit(1) //mandatory (as per the Node.js docs)
+//})
 
 client.on('voiceStateUpdate', (oldState, newState) => {
     // if nobody left the channel in question, return.
@@ -44,7 +53,7 @@ client.on("message", async message => {
     if (message.author.bot) return;
     if (!message.content.startsWith(prefix)) return;
 
-    const serverQueue = queueM.get(message.guild.id);
+    serverQueue = queueM.get(message.guild.id);
 
     const args = message.content.split(" ");
 //todo: serverqueue.songs noch nciht immer hier schon definiert, erst nach play aufrug
