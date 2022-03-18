@@ -1,7 +1,7 @@
 const Discord = require("discord.js");
 const { prefix } = require("./config.json");
 const ytdl = require("ytdl-core");
-const token = "OTUzNDExNzcwMjcyMzQyMDE2.YjEL5w.GKD9SN1cyR2eK0zRx-iWkbs2Qjo"//process.env.token
+const token = process.env.token
 const client = new Discord.Client();
 
 const queueM = new Map();
@@ -20,7 +20,7 @@ client.once("disconnect", () => {
 
 client.on('error', error => {
     console.log(error);
-    message.channel.send(`Server Connection Error @Shaddy#8969 please reset me`);
+    message.channel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
 });
 
 client.on('voiceStateUpdate', (oldState, newState) => {
