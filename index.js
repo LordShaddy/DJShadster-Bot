@@ -20,12 +20,13 @@ client.once("disconnect", () => {
 });
 
 client.on('error', error => {
+    console.log("client catched error")
     console.log(error);
     //serverQueue.textChannel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
 });
 
 process.on('uncaughtException', err => {
-    console.error('There was an uncaught error', err)
+    console.error('There was an uncaught process error', err)
     //serverQueue.textChannel.send(`Hosting Server Connection Error @Shaddy#8969 please reset me`);
     //serverQueue.voiceChannel.leave();
     process.exit(1) //mandatory (as per the Node.js docs)
@@ -50,23 +51,20 @@ client.on("message", async message => {
 
     const args = message.content.split(" ");
 //todo: serverqueue.songs noch nciht immer hier schon definiert, erst nach play aufrug
-    if (message.content.startsWith(`${prefix}play`)) {
+    if (message.content.toLowerCase().startsWith(`${prefix}play`)) {
         if (args.length !== 2) return;
         execute(message, serverQueue);
         return;
-    } else if (message.content.startsWith(`${prefix}skip`)) {
-        if (serverQueue.songs.length > 0)
-            skip(message, serverQueue);
+    } else if (message.content.toLowerCase().startsWith(`${prefix}skip`)) {
+        skip(message, serverQueue);
         return;
-    } else if (message.content.startsWith(`${prefix}loop`)) {
-        if (serverQueue.songs.length > 0)
-            loop(message, serverQueue);
+    } else if (message.content.toLowerCase().startsWith(`${prefix}loop`)) {
+        loop(message, serverQueue);
         return;
-    } else if (message.content.startsWith(`${prefix}queue`)) {
-        if (serverQueue.songs.length > 0)
-            queue(message, serverQueue);
+    } else if (message.content.toLowerCase().startsWith(`${prefix}queue`)) {
+        queue(message, serverQueue);
         return;
-    } else if (message.content.startsWith(`${prefix}leave`)) {
+    } else if (message.content.toLowerCase().startsWith(`${prefix}leave`)) {
         leave(message, serverQueue);
         return;
     }
@@ -104,7 +102,7 @@ async function execute(message, serverQueue) {
         requestedBy: message.author.username
     };
 
-    if (!serverQueue ) {
+    if (!serverQueue || serverQueue.songs.length < 1) {
         const queueContruct = {
             textChannel: message.channel,
             voiceChannel: voiceChannel,
@@ -128,6 +126,7 @@ async function execute(message, serverQueue) {
             return message.channel.send(err);
         }
     } else {
+        //maybe breaks something
         if (serverQueue.songs.length < 1) {
             serverQueue.songs.push(song);
             play(message.guild, song);
@@ -179,7 +178,7 @@ function loop(message,serverQueue){
             "You have to be in a voice channel to stop the music!"
         );
 
-    if (!serverQueue)
+    if (!serverQueue || serverQueue.songs.length < 1)
         return message.channel.send("There is no song that I could repeat!");
 
     serverQueue.loop = !serverQueue.loop
@@ -195,7 +194,7 @@ function skip(message, serverQueue) {
         return message.channel.send(
             "You have to be in a voice channel to stop the music!"
         );
-    if (!serverQueue)
+    if (!serverQueue || serverQueue.songs.length < 1)
         return message.channel.send("There is no song that I could skip!");
     serverQueue.connection.dispatcher.end();
 }
@@ -211,7 +210,6 @@ function play(guild, song) {
             if (serverQueue.loop === true)
                 //todo: loops the queue instead of the song - make new function for single loop
                 serverQueue.songs.push(serverQueue.songs[0]);
-                serverQueue.songs.
             serverQueue.songs.shift();
             play(guild, serverQueue.songs[0]);
         })
@@ -222,9 +220,11 @@ function play(guild, song) {
 }
 
 client.login(token);
-
+//todo: serverqueue.songs noch nciht immer bei commands schon definiert, erst nach play aufrug
+//todo: simple loop of one song, not entire queue
 //todo: leave voice if shut down
 //todo: connection is null error
 //-> connection wenn heroku faxen macht gleichzeitiger zugriff? + noch in voice ist nach neustart
-//todo: sometimes skips queue if new song
+//todo: sometimes skips queue if !play song with queue
+//-> maybe if in middle of song, queue already gone doesnt find .songs - undefined
 //todo: !np - anzeige wie weit im song ist
