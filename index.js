@@ -3,9 +3,14 @@ const { prefix } = require("./config.json");
 const ytdl = require("ytdl-core");
 const token = process.env.token
 const client = new Discord.Client();
-
 const queueM = new Map();
 
+const { YTSearcher } = require('ytsearcher');
+
+const searcher = new YTSearcher({
+    key: process.env.yttoken,
+    revealed: true
+});
 
 client.once("ready", () => {
     console.log("Ready!");
@@ -38,9 +43,11 @@ client.on('voiceStateUpdate', (oldState, newState) => {
         return;
 
     // otherwise, check how many people are in the channel now
-    if (oldState.channel.members.size <= 1)
-       oldState.channel.leave(); // leave
-       queueM.delete(oldState.guild.id);
+    if (oldState.channel.members.size <= 1) {
+        oldState.channel.leave(); // leave
+        console.log(`${new Date().toLocaleString("de-DE")} Leaving Voice for: "${oldState.guild.name}" `)
+        queueM.delete(oldState.guild.id);
+    }
 });
 
 client.on("message", async message => {
@@ -50,9 +57,10 @@ client.on("message", async message => {
      const serverQueue = queueM.get(message.guild.id);
 
     const args = message.content.split(" ");
-//todo: serverqueue.songs noch nciht immer hier schon definiert, erst nach play aufrug
+    const input = message.content.substring(message.content.indexOf(' ') + 1);
+
     if (message.content.toLowerCase().startsWith(`${prefix}play`)) {
-        if (args.length !== 2) return;
+        if (args.length < 2) return;
         execute(message, serverQueue);
         return;
     } else if (message.content.toLowerCase().startsWith(`${prefix}skip`)) {
@@ -67,6 +75,12 @@ client.on("message", async message => {
     } else if (message.content.toLowerCase().startsWith(`${prefix}leave`)) {
         leave(message, serverQueue);
         return;
+    } else if (message.content.toLowerCase().startsWith(`${prefix}pause`)) {
+        pause(message, serverQueue);
+        return;
+    } else if (message.content.toLowerCase().startsWith(`${prefix}resume`)) {
+        resume(message, serverQueue);
+        return;
     }
     else {
         message.channel.send("You need to enter a valid command!");
@@ -75,6 +89,7 @@ client.on("message", async message => {
 
 async function execute(message, serverQueue) {
     const args = message.content.split(" ");
+    const input = message.content.substring(message.content.indexOf(' ') + 1);
 
     const voiceChannel = message.member.voice.channel;
     if (!voiceChannel)
@@ -89,9 +104,18 @@ async function execute(message, serverQueue) {
     }
     let songInfo
     try{
-        songInfo = await ytdl.getInfo(args[1]);
+        if(validURL(input)){
+            if (ytdl.validateURL(input)){
+                songInfo = await ytdl.getInfo(input);
+            }else{
+                return message.channel.send(`Please send a valid song link`);
+            }
+        }else{
+            let result = await searcher.search(input, { type: "video" })
+            songInfo = await ytdl.getInfo(result.first.url)
+        }
     }catch (err){
-        //console.log(err);
+        console.log(err);
         return message.channel.send(`oopsie woopsie! Looks like I couldn't access the video for some reason! (age restriction/having to log in/other BS) `);
     }
 
@@ -121,12 +145,12 @@ async function execute(message, serverQueue) {
             var connection = await voiceChannel.join();
             queueContruct.connection = connection;
             play(message.guild, queueContruct.songs[0]);
+            console.log(`${new Date().toLocaleString("de-DE")} Joining Voice for: "${message.guild.name}"`)
         } catch (err) {
             console.log(err);
             return message.channel.send(err);
         }
     } else {
-        //maybe breaks something
         if (serverQueue.songs.length < 1) {
             serverQueue.songs.push(song);
             play(message.guild, song);
@@ -138,9 +162,45 @@ async function execute(message, serverQueue) {
     }
 }
 
+function validURL(str) {
+    var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
+        '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+    return !!pattern.test(str);
+}
+
 function getFormattedTime(song){
     let dur = `${parseInt(song.vLength / 60)}:${(song.vLength - 60 * parseInt(song.vLength / 60)).toString().padStart(2, '0')}`
     return dur;
+}
+
+function pause(message, serverQueue) {
+    if (!message.member.voice.channel)
+        return message.channel.send(
+            "You have to be in a voice channel to pause the music!"
+        );
+    if (!serverQueue || serverQueue.songs.length < 1)
+        return message.channel.send("There is no song in the queue!");
+    if(serverQueue.connection.dispatcher.paused)
+        return message.channel.send("The song is already paused!");
+    serverQueue.connection.dispatcher.pause();
+    message.channel.send("The song has been paused!");
+}
+
+function resume(message,serverQueue) {
+    if (!message.member.voice.channel)
+        return message.channel.send(
+            "You have to be in a voice channel to pause the music!"
+        );
+    if (!serverQueue || serverQueue.songs.length < 1)
+        return message.channel.send("There is no song in the queue!");
+    if(!serverQueue.connection.dispatcher.paused)
+        return message.channel.send("The song is already playing!");
+    serverQueue.connection.dispatcher.resume();
+    message.channel.send("The song has been resumed!");
 }
 
 function leave(message, serverQueue) {
@@ -157,7 +217,7 @@ function queue(message, serverQueue){
             "You have to be in a voice channel to stop the music!"
         );
 
-    if (!serverQueue)
+    if (!serverQueue || serverQueue.songs.length < 1)
         return message.channel.send("There is no song in the queue");
     let nowPlaying = serverQueue.songs[0];
     let dur = getFormattedTime(nowPlaying)
@@ -207,9 +267,10 @@ function play(guild, song) {
     const dispatcher = serverQueue.connection
         .play(ytdl(song.url))
         .on("finish", () => {
-            if (serverQueue.loop === true)
+            if (serverQueue.loop === true) {
                 //todo: loops the queue instead of the song - make new function for single loop
                 serverQueue.songs.push(serverQueue.songs[0]);
+            }
             serverQueue.songs.shift();
             play(guild, serverQueue.songs[0]);
         })
@@ -220,11 +281,7 @@ function play(guild, song) {
 }
 
 client.login(token);
-//todo: serverqueue.songs noch nciht immer bei commands schon definiert, erst nach play aufrug
 //todo: simple loop of one song, not entire queue
 //todo: leave voice if shut down
-//todo: connection is null error
-//-> connection wenn heroku faxen macht gleichzeitiger zugriff? + noch in voice ist nach neustart
-//todo: sometimes skips queue if !play song with queue
-//-> maybe if in middle of song, queue already gone doesnt find .songs - undefined
 //todo: !np - anzeige wie weit im song ist
+// !person command - random quote of the person ":forsencd: 💬 [PL] ~ ..."
